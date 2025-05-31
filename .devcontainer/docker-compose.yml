@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:3001
+      - REACT_APP_APP_NAME=Åby Whisky Club
+    depends_on:
+      - backend
+
+  backend:
+    build:
+      context: ./backend  
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DB_HOST=database
+      - DB_PORT=5432
+      - DB_NAME=whiskyclub
+      - DB_USER=whiskyclub
+      - DB_PASSWORD=whiskyclub123
+      - JWT_SECRET=your-jwt-secret-key-change-in-production
+      - JWT_EXPIRE=7d
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - database
+      - redis
+
+  database:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=whiskyclub
+      - POSTGRES_USER=whiskyclub  
+      - POSTGRES_PASSWORD=whiskyclub123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+
+volumes:
+  postgres_data:
+  redis_data:
